@@ -1,9 +1,9 @@
-# wlrip #
+is a # wlrip #
 By Barney Skeggs (b2dfir.blogspot.com)
 
 ‘WaitList.dat’ (WaitList) is data file which has been found to contain stripped text from email, contact and document files as a function of the Windows Search Indexer.
 
-WLrip will extract the metadata and body text of each indexed record to a new .txt file, and produce a metadata report in .csv format.
+WLrip is a Python 3.5 program that will extract the metadata and body text of each indexed record to a new .txt file, and produce a metadata report in .csv format.
 Running WLrip with the ‘-x’ option will produce a .xlsx report with hyperlinks to each .txt file created. This is the recommended method to run WLrip, however it requires the Python ‘XLSXWriter’ module (https://github.com/jmcnamara/XlsxWriter).
 
 Recommended execution of WLrip.py is as follows:
