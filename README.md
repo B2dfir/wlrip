@@ -1,4 +1,5 @@
 # WLrip #
+Version 0.1
 By Barney Skeggs (b2dfir.blogspot.com)
 
 ‘WaitList.dat’ (WaitList) is data file which has been found to contain stripped text from email, contact and document files as a function of the Windows Search Indexer.
