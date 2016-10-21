@@ -25,7 +25,7 @@ I have done my best to write this program in a way that allows it to capture new
 
 Two values are included in the output report for community analysis. 
 
-...The first is G4Hex, which is suspect is actually padding and/or zeros from another value of larger size, as it is always 00.
-...The second is G6Hex, which i suspect is an ID for the document which was indexed by Windows Search Indexer.
+The first is G4Hex, which I suspect is actually padding and/or zeros from another value of larger size, as it is always 00.
+The second is G6Hex, which I suspect is an ID for the document which was indexed by Windows Search Indexer.
 
 Please see b2dfir.blogspot.com for a description of the data structure understanding that underpins this parser.
