@@ -1,7 +1,7 @@
-####WLrip.py
+####WLrip.py v0.1
 ###By Barnaby Skeggs
 ##Parses the Windows Search Index / TextHarvester data store file 'WaitList.dat'
-#Licensed under the xxxx license
+#Licensed under the GPL3 license
 
 ##Relevant modules
 import csv
