@@ -246,7 +246,7 @@ if args.kill:
 	os.system("taskkill /F /im SearchIndexer.exe")
 
 #Program Header
-print("// WLrip.py // Parses WaitList.dat // By Barney Skeggs //")	
+print("// WLrip.py // Parses WaitList.dat // By Barnaby Skeggs //")	
 
 #Time used for folder naming
 Now = time.strftime("%Y%m%d-%Hh%Mm%Ss")
@@ -310,9 +310,9 @@ while Offset < len(mm):
 		Number += 1
 		RecordOffset = 0
 		Offset = Offset + FileSize + 1
+		ItemCount += 1
 	else:
 		Offset = Offset + FileSize + 1
-	ItemCount += 1
 	if ItemCount == ProgressCount:
 		print(str(ItemCount) + " records processed...")
 		ProgressCount += 100
