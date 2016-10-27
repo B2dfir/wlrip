@@ -14,11 +14,11 @@ Recommended execution of WLrip.py is as follows:
 
 | Argument       | Description           |
 | ------------- |-------------|
-|-c | Removes null characters, in an attempt to clean up the text output |
+|-c | Removes null characters, in an attempt to clean up the text output. |
 |-x |Produces a .xlsx report, as well as the default .csv report.    | 
 |-k |Kills the ‘Microsoft Windows Search Indexer’ process, which will lock the WaitList.dat file on a live system. Requires administrator privileges. |
-|-f |Specify WaitList.dat file location for processing|
-|-o |Specifies an output directory. If not included, the report will be generated within a new folder in the current directory|
+|-f |Specify WaitList.dat file location for processing.|
+|-o |Specifies an output directory. If not included, the report will be generated within a new folder in the current directory.|
 
 I have done my best to write this program in a way that allows it to capture new values (which I have not yet encountered) in the ‘other’ field. Values captured in the ‘other’ field will be appended with a [type], to indicate the field value stored in the data structure. Please inform me or propose changes to the git should you come across new value types for implementation in future release.
 
