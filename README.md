@@ -1,4 +1,4 @@
-# WLrip #
+# WLrip (beta) #
 Version 0.1
 By Barney Skeggs (b2dfir.blogspot.com)
 
