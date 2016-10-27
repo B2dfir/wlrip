@@ -144,8 +144,7 @@ def GetBody(WorkingBinary, RecordOffset):
 			BodyType = 'Contact'
 		elif BodyType == 29:
 			BodyType = 'Document'
-		else:
-			BodyType = "[Type:{}]".format(BodyType) #Captures un-encountered values in the 'other' field, appending them with the value flag integer value for incorporation into future versions
+		else:			BodyType = "[Type:{}]".format(BodyType) #Captures un-encountered values in the 'other' field, appending them with the value flag integer value for incorporation into future versions
 		RecordOffset += 16 # set record after pre body
 		Body = struct.unpack_from('%ds' % (PreBody[3]*2), WorkingBinary, RecordOffset) #Reads binary body length
 		BodyAscii = codecs.decode(Body[0], 'ascii', 'ignore') #Decodes binary to ascii text
@@ -214,7 +213,7 @@ def Close(ItemCount):
 		worksheet.set_column('A:A', 8.11)
 		worksheet.set_column('B:B', 11.42)
 		worksheet.set_column('C:C', 16.21)
-		worksheet.set_column('D:D', 6.74)
+		worksheet.set_column('D:D', 7.86)
 		worksheet.set_column('E:E', 5.21)
 		worksheet.set_column('F:F', 8.16)
 		worksheet.set_column('G:G', 16.21)
