@@ -14,7 +14,7 @@ Recommended execution of WLrip.py is as follows:
 
 | Argument       | Description           |
 | ------------- |-------------|
-|-c | Removes various non-ascii characters, in an attempt to clean up the text output |
+|-c | Removes various null characters, in an attempt to clean up the text output |
 |-x |Produces a .xlsx report, as well as the default .csv report.    | 
 |-k |Kills the ‘Microsoft Windows Search Indexer’ process, which will lock the WaitList.dat file on a live system. Requires administrator privileges. |
 |-f |Specify WaitList.dat file location for processing|
