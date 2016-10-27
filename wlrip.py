@@ -179,8 +179,7 @@ def Print(Offset, Header, UnknownHex, Names, Addresses, Subject, BodyType, Body,
 	elif SentFlag == 1:
 		SentFlag = ""
 	else:
-		SentFlag = '[Type:{}]'.format(Header[3])
-	Type = Header[5]
+		SentFlag = '[Type:{}]'.format(Header[3])	Type = Header[5]
 	if Type == 1:
 		Type = 'Email'
 	elif Type == 0:
