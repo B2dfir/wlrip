@@ -16,6 +16,10 @@ import sys
 import argparse
 import binascii
 
+#If -c argument, remove spacing from string for cleaner output
+def CleanString(String):
+	String = re.sub(r'[\x00]',r'', String)
+	return(String)
 
 #Function to retreive the size of 1 index record (based on hex integer)
 def GetFileSize(Offset):
@@ -45,7 +49,7 @@ def GetHeader(WorkingBinary):
 	return(Header, RecordOffset, UnknownHex)
 
 #Function to read metadata values that exist before the body values in a binary index record
-def GetData(WorkingBinary, RecordOffset):
+def GetData(WorkingBinary, RecordOffset, BeforeBody):
 	#Set values as an empty string, as not all records will contain every value. For report printing purposes.
 	AllNames = ""
 	AllAddresses = ""
@@ -61,7 +65,9 @@ def GetData(WorkingBinary, RecordOffset):
 	FullName = ""
 	Title = ""
 	Surname = ""
+	MiddleName = ""
 	State = ""
+	ContactURL = ""
 	#Note: Following while loop checks the size of the binary index record passed into this function is large enough to contain data.
 	while (len(WorkingBinary[RecordOffset:])) > 12 and (struct.unpack_from("<B", WorkingBinary, RecordOffset))[0] == 0: #checks the byte value that instructs whether there is more metadata to extract
 		PreData = struct.unpack_from("<I I I", WorkingBinary, RecordOffset+1)
@@ -74,7 +80,7 @@ def GetData(WorkingBinary, RecordOffset):
 		DataAscii = codecs.decode(Data[0], 'ascii', 'ignore') #Decodes binary to ascii
 		##Optional: If -c argument was entered, this will remove some non-ascii characters to clean up output
 		if args.cleanup:
-			DataAscii = re.sub(r'[^\x20-\x7F, \x0D, \x0A]',r'', DataAscii)
+			DataAscii = CleanString(DataAscii)
 		RecordOffset += (PreData[2]*2) #Offsets current position by length of the extracted value
 		#Stores the ascii text in the appropriate variable. Can append multiple values to one field (semicolon delimited)
 		if PreData[0] == 7:
@@ -101,16 +107,22 @@ def GetData(WorkingBinary, RecordOffset):
 			Title = DataAscii
 		elif PreData[0] == 18:
 			Surname = DataAscii
+		elif PreData[0] == 19:
+			MiddleName = DataAscii
 		elif PreData[0] == 21:
 			State = DataAscii
+		elif PreData[0] == 22:
+			ContactURL = DataAscii
 		elif PreData[0] == 6:
 			Subject = DataAscii
 		else:
 			AllOther += (DataAscii+"[Type:{}]".format(PreData[0])) #Captures un-encountered values in the 'other' field, appending them with the value flag integer value for incorporation into future versions
 	RecordOffset += 1 #offsets record past the final byte value which exited the while loop
 	#Returns values extracted
-	return(AllNames, AllAddresses, Subject, Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, RecordOffset, AllOther)
-
+	if BeforeBody == 1:
+		return(AllNames, AllAddresses, Subject, Location, Company, Address, City, State, Country, FirstName, MiddleName, Surname, FullName, Title, Contact, RecordOffset, ContactURL, AllOther)
+	else:
+		return(Subject, Other, RecordOffset)
 ##Function to retreive body text of an index record
 def GetBody(WorkingBinary, RecordOffset):
 	#Set values as an empty string, as not all records will contain every value. For report printing purposes.
@@ -155,24 +167,11 @@ def GetBody(WorkingBinary, RecordOffset):
 		RecordOffset += (PreMoreBody[3]*2)  #Offsets current position by the length of the binary length extracted
 	##Optional: If -c argument was entered, this will remove some non-ascii characters to clean up output
 	if args.cleanup:
-		BodyAscii = re.sub(r'[^\x20-\x7F, \x0D, \x0A]',r'', BodyAscii)
+		BodyAscii = CleanString(BodyAscii)
 	RecordOffset += 1 #offsets record past the final byte value which exited the while loop
 	return(BodyAscii, RecordOffset, BodyType)
 
-##The same as function GetData, with less return values. Subject is stored following the body, whereas all other values are store prior to the body, so this must be called separately.
-def GetSubject(WorkingBinary, RecordOffset):
-	SubjectAscii = ""
-	if len(WorkingBinary[RecordOffset:]) > 12:
-		PreSubject = struct.unpack_from("<I I I", WorkingBinary, RecordOffset)
-		RecordOffset += 12
-		Subject = struct.unpack_from('%ds' % (PreSubject[2]*2), WorkingBinary, RecordOffset)
-		SubjectAscii = codecs.decode(Subject[0], 'ascii', 'ignore')
-		if args.cleanup:
-			SubjectAscii = re.sub(r'[^\x20-\x7F, \x0D, \x0A]',r'', SubjectAscii)
-		RecordOffset += (PreSubject[2]*2)
-	return(SubjectAscii, RecordOffset)
-
-def Print(Offset, Header, UnknownHex, Names, Addresses, Subject, BodyType, Body, Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, Number, Other):
+def Print(Offset, Header, UnknownHex, Names, Addresses, Subject, BodyType, Body, Location, Company, Address, City, State, Country, FirstName, MiddleName, Surname, FullName, Title, Contact, ContactURL, Number, Other):
 	Offset = Offset - 4
 	SentFlag = Header[3]
 	if SentFlag == 0:
@@ -191,20 +190,19 @@ def Print(Offset, Header, UnknownHex, Names, Addresses, Subject, BodyType, Body,
 	RecordLength = (str(Header[0]) + 'b')
 	DateTime = str(datetime(1601,1,1) + timedelta(microseconds=(Header[1]/10.)))[:19]
 	with open(OutputFile, 'a') as csvfile: #write result to csv output file
-		fieldnames = ['Offset', 'Record Length', 'Date/Time(UTC)', 'SentFlag', 'G4Hex', 'Type', 'G6Hex', 'Subject', 'Recipient Name(s)', 'Recipient Address(es)', 'BodyType', 'Body', 'Location','Company', 'Address', 'City', 'State', 'Country', 'First Name', 'Surname', 'Full Name', 'Title', 'Contact', 'Other']
+		fieldnames = ['Offset', 'Record Length', 'Date/Time(UTC)', 'SentFlag', 'Unkn*', 'Type', 'DocID*', 'Subject', 'Recipient Name(s)', 'Recipient Address(es)', 'BodyType', 'Body', 'Location','Company', 'Address', 'City', 'State', 'Country', 'First Name', 'Middle Name', 'Surname', 'Full Name', 'Title', 'Contact', 'URL', 'Other']
 		writer = csv.DictWriter(csvfile, lineterminator='\n', fieldnames=fieldnames)	
-		writer.writerow({'Offset': Offset, 'Record Length': RecordLength, 'Date/Time(UTC)':DateTime, 'SentFlag':SentFlag, 'G4Hex':UnknownHex[0], 'Type':Type, 'G6Hex': UnknownHex[1], 'Subject': Subject, 'Recipient Name(s)': Names,'Recipient Address(es)': Addresses, 'BodyType': BodyType, 'Body':Number, 'Location':Location, 'Company':Company, 'Address':Address, 'City':City, 'State':State, 'Country':Country, 'First Name':FirstName, 'Surname':Surname, 'Full Name':FullName, 'Title':Title, 'Contact':Contact, 'Other': Other,})
-	WriteTextFile(Offset, RecordLength, DateTime, SentFlag, Type, Subject, Names, Addresses, BodyType, Body, Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, Number, Other)
-	WriteToXlsx = (Offset, RecordLength, DateTime, SentFlag, UnknownHex[0], Type, UnknownHex[1], Subject, Names, Addresses, BodyType,  "", Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, Other)
+		writer.writerow({'Offset': Offset, 'Record Length': RecordLength, 'Date/Time(UTC)':DateTime, 'SentFlag':SentFlag, 'Unkn*':UnknownHex[0], 'Type':Type, 'DocID*': UnknownHex[1], 'Subject': Subject, 'Recipient Name(s)': Names,'Recipient Address(es)': Addresses, 'BodyType': BodyType, 'Body':Number, 'Location':Location, 'Company':Company, 'Address':Address, 'City':City, 'State':State, 'Country':Country, 'First Name':FirstName, 'Middle Name':MiddleName, 'Surname':Surname, 'Full Name':FullName, 'Title':Title, 'Contact':Contact, 'URL': ContactURL, 'Other': Other,})
+	WriteTextFile(Offset, RecordLength, UnknownHex[1], DateTime, SentFlag, Type, Subject, Names, Addresses, BodyType, Body, Location, Company, Address, City, State, Country, FirstName, MiddleName, Surname, FullName, Title, Contact, ContactURL, Number, Other)
+	WriteToXlsx = (Offset, RecordLength, DateTime, SentFlag, UnknownHex[0], Type, UnknownHex[1], Subject, Names, Addresses, BodyType,  "", Location, Company, Address, City, State, Country, FirstName, MiddleName, Surname, FullName, Title, Contact, ContactURL, Other)
 	return(Number, WriteToXlsx)
 
-def WriteTextFile(Offset, RecordLength, DateTime, SentFlag,  Type, Subject, Names, Addresses, BodyType, Body, Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, Number, Other):
+def WriteTextFile(Offset, RecordLength, DocID, DateTime, SentFlag,  Type, Subject, Names, Addresses, BodyType, Body, Location, Company, Address, City, State, Country, FirstName, MiddleName, Surname, FullName, Title, Contact, ContactURL, Number, Other):
 	hashes = '###############################'
 	TxtName = "{}{}-WLripReport/TxtFiles/{}.txt".format(OutputDir, Now, Number)
 	os.makedirs(os.path.dirname(TxtName), exist_ok=True)	
 	TxtFile = open(TxtName, "w")
-	
-	TxtFile.write('\n' + hashes + '\n' + 'Offset: ' + str(Offset) + '\n' + 'Record Length: ' + RecordLength + '\n' +  'SentFlag: ' + SentFlag + '\n' + 'Subject: ' + Subject + '\n' + 'Type: ' + Type + '\n' + 'Location: ' + Location + '\n' + 'Company: ' + Company + '\n' + hashes + '\n' + 'Date Time: ' + DateTime + '\n' + hashes + '\n' + 'Recipient List: ' + Names + '\n' + 'Address List: ' + Addresses + '\n' + hashes + '\n' + Body + '\n' + hashes + '\n' + '(Only populated if record is a contact)' + '\n' + 'Address :'+ Address + '\n' + 'City :' + City + '\n' + 'State :' + State + '\n' + 'Country :' + Country + '\n' + 'First Name: ' + FirstName + '\n' + 'Surname: ' + Surname + '\n' + 'Full Name: ' + FullName + '\n' + 'Title: ' + Title + '\n' + 'Contact :' + Contact + '\n' + hashes + '\n' + '(Captures data fields not currently encountered by the developer)' + '\n' + 'Other Fields: ' + Other + '\n' + hashes + '\n' + hashes + '\n')
+	TxtFile.write(hashes + '\n' + 'Offset: ' + str(Offset) + '\n' + 'Record Length: ' + RecordLength + '\n' +  'DocID*: ' + DocID + '\n' + 'SentFlag: ' + SentFlag + '\n' + 'Subject: ' + Subject + '\n' + 'Type: ' + Type + '\n' + 'Location: ' + Location + '\n' + 'Company: ' + Company + '\n' + 'Body Type: ' + BodyType + '\n' + hashes + '\n' + 'Date Time: ' + DateTime + '\n' + hashes + '\n' + 'Recipient List: ' + Names + '\n' + 'Address List: ' + Addresses + '\n' + hashes + '\n' + Body + '\n' + hashes + '\n' + '(Only populated if record is a contact)' + '\n' + 'Address :'+ Address + '\n' + 'City :' + City + '\n' + 'State :' + State + '\n' + 'Country :' + Country + '\n' + 'First Name: ' + FirstName + '\n' + 'Middle Name: ' + MiddleName + '\n' + 'Surname: ' + Surname + '\n' + 'Full Name: ' + FullName + '\n' + 'Title: ' + Title + '\n' + 'Contact: ' + Contact + '\n' + 'URL: ' + ContactURL + '\n' + hashes + '\n' + '(Captures data fields not currently encountered by the developer)' + '\n' + 'Other Fields: ' + Other + '\n' + hashes + '\n' + hashes + '\n' + "* DocID: Format Unknown - Appears to be a unique ID for the file that was indexed." + '\n' + "Unkn: Unknown value. Has always been 0 in developer's tests. Output for community analysis." + '\n' + "For more information please visit b2dfir.blogspot.com")
 	TxtFile.close()
 	return(TxtName)
 	
@@ -217,7 +215,7 @@ def Close(ItemCount):
 		worksheet.set_column('B:B', 11.42)
 		worksheet.set_column('C:C', 16.21)
 		worksheet.set_column('D:D', 6.74)
-		worksheet.set_column('E:E', 5.32)
+		worksheet.set_column('E:E', 5.21)
 		worksheet.set_column('F:F', 8.16)
 		worksheet.set_column('G:G', 16.21)
 		worksheet.set_column('H:H', 40)
@@ -233,8 +231,8 @@ def Close(ItemCount):
 #####BODY OF PROGRAM#####
 
 #Parse Arguments
-parser = argparse.ArgumentParser(description="Extract indexed records from %AppData%\Local\Microsoft\InputPersonalization\TextHarvester\WaitList.dat")
-parser.add_argument("-c", "--cleanup", help="Removes non-ascii characters for a cleaner text output", action="store_true")
+pparser = argparse.ArgumentParser(description="WLrip v0.1 - By Barnaby Skeggs - Extract indexed records from: %AppData%\Local\Microsoft\InputPersonalization\TextHarvester\WaitList.dat \n Github:https://github.com/B2dfir/wlrip \n Details:https://b2dfir.blogspot.com.au/2016/10/touch-screen-lexicon-forensics.html")
+parser.add_argument("-c", "--cleanup", help="Removes spaces from utf-8 strings for a cleaner text output", action="store_true")
 parser.add_argument("-x", "--xlsx", help="Write xlsx report with hyperlinks to record extracts (requires XlsxWriter python module)", action="store_true")
 parser.add_argument("-k", "--kill", help="[Admin Required] Kills 'Microsoft Windows Search Indexer' process to remove WaitList.dat file lock on a live system", action="store_true")
 parser.add_argument("-f", "--file", help="file input for processing", required=True)
@@ -248,7 +246,7 @@ if args.kill:
 	os.system("taskkill /F /im SearchIndexer.exe")
 
 #Program Header
-print("// WLrip.py // Parses WaitList.dat // By Barnaby Skeggs //")	
+print("// WLrip.py // Parses WaitList.dat // By Barnaby Skeggs // b2dfir.blogspot.com")	
 
 #Time used for folder naming
 Now = time.strftime("%Y%m%d-%Hh%Mm%Ss")
@@ -258,20 +256,20 @@ if args.outputdir:
 	OutputDir=args.outputdir + "/"
 else:
 	OutputDir=""
-OutputFile = "{}{}-WLripReport/Wlripx_output.csv".format(OutputDir, Now) #Generates output file/folder name
+OutputFile = "{}{}-WLripReport/Wlrip_output.csv".format(OutputDir, Now) #Generates output file/folder name
 os.makedirs(os.path.dirname(OutputFile), exist_ok=True)	 #Creates output file/folder
 with open(OutputFile, 'w') as csvfile: #write an empty CSV file, ready for results to be appended
-	fieldnames = ['Offset', 'Record Length', 'Date/Time(UTC)', 'SentFlag', 'G4Hex', 'Type', 'G6Hex', 'Subject', 'Recipient Name(s)', 'Recipient Address(es)', 'BodyType', 'Body', 'Location', 'Company', 'Address', 'City', 'State', 'Country', 'First Name', 'Surname', 'Full Name', 'Title', 'Contact', 'Other']
+	fieldnames = ['Offset', 'Record Length', 'Date/Time(UTC)', 'SentFlag', 'Unkn*', 'Type', 'DocID*', 'Subject', 'Recipient Name(s)', 'Recipient Address(es)', 'BodyType', 'Body', 'Location', 'Company', 'Address', 'City', 'State', 'Country', 'First Name', 'Middle Name', 'Surname', 'Full Name', 'Title', 'Contact', 'URL', 'Other']
 	writer = csv.DictWriter(csvfile, lineterminator='\n', fieldnames=fieldnames)
 	writer.writeheader()
 
 ###Create Output XLSX File
 if args.xlsx:
-	workbook = xlsxwriter.Workbook("{}{}-WLripReport/Wlripx_output.xlsx".format(OutputDir, Now))
+	workbook = xlsxwriter.Workbook("{}{}-WLripReport/Wlrip_output.xlsx".format(OutputDir, Now))
 	worksheet = workbook.add_worksheet('output')
 	row = 0
 	col = 0
-	xlsheader = ('Offset', 'Record Length', 'Date/Time(UTC)', 'SentFlag', 'G4Hex', 'Type', 'G6Hex', 'Subject', 'Recipient Name(s)', 'Recipient Address(es)', 'BodyType', 'Body', 'Location', 'Company', 'Address', 'City', 'State', 'Country', 'First Name', 'Surname', 'Full Name', 'Title', 'Contact', 'Other')
+	xlsheader = ('Offset', 'Record Length', 'Date/Time(UTC)', 'SentFlag', 'Unkn*', 'Type', 'DocID*', 'Subject', 'Recipient Name(s)', 'Recipient Address(es)', 'BodyType', 'Body', 'Location', 'Company', 'Address', 'City', 'State', 'Country', 'First Name', 'Middle Name', 'Surname', 'Full Name', 'Title', 'Contact', 'URL', 'Other')
 	for item in xlsheader:
 		worksheet.write(row,col, item)
 		col += 1
@@ -291,14 +289,16 @@ while Offset < len(mm):
 	if FileSize >= 50 and (Offset + FileSize) < len(mm):
 		WorkingBinary = GetBinary(FileSize, Offset) #Assigns the first indexed record (based on offset and file size) to a variable for processing
 		Header, RecordOffset, UnknownHex = GetHeader(WorkingBinary) #Reads the first set of values from the indexed record, and increments the record offset for remaining processing
-		Names, Addresses, Subject, Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, RecordOffset, Other = GetData(WorkingBinary, RecordOffset) #Retreives data which is structured in the same format from the indexed record
+		Names, Addresses, Subject, Location, Company, Address, City, State, Country, FirstName, MiddleName, Surname, FullName, Title, Contact, RecordOffset, ContactURL, Other = GetData(WorkingBinary, RecordOffset, 1) #Retreives data which is structured in the same format from the indexed record
 		Body, RecordOffset, BodyType = GetBody(WorkingBinary, RecordOffset) #Retreives Body of file
 		if Header[5] == 1: #If Header[5] == 1, then the file is an email and will have a subject. Subject is stored after the body text, so the function is required to be called again
 			if Subject == "":
-				Subject, RecordOffset = GetSubject(WorkingBinary, RecordOffset) #retreives subject of email
+				Subject, Other1, RecordOffset = GetData(WorkingBinary, RecordOffset, 0) #retreives subject of email, and any other additional metadata values after the body text (none have been identified, this primarily for error handling)
+				if Other1 != "": 
+					Other += Other1#Adds any new metadata fields identified after body text to original 'other' variable. 
 		else:
 			Subject = "" #sets subject field to blank for non emails
-		Number, WriteToXlsx = Print(Offset, Header, UnknownHex, Names, Addresses, Subject, BodyType, Body, Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, Number, Other)
+		Number, WriteToXlsx = Print(Offset, Header, UnknownHex, Names, Addresses, Subject, BodyType, Body, Location, Company, Address, City, State, Country, FirstName, MiddleName, Surname, FullName, Title, Contact, ContactURL, Number, Other)
 		###Write to XLSX###
 		if args.xlsx:	
 			col = 0
