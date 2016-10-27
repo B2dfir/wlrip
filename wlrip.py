@@ -103,11 +103,13 @@ def GetData(WorkingBinary, RecordOffset):
 			Surname = DataAscii
 		elif PreData[0] == 21:
 			State = DataAscii
+		elif PreData[0] == 6:
+			Subject = DataAscii
 		else:
 			AllOther += (DataAscii+"[Type:{}]".format(PreData[0])) #Captures un-encountered values in the 'other' field, appending them with the value flag integer value for incorporation into future versions
 	RecordOffset += 1 #offsets record past the final byte value which exited the while loop
 	#Returns values extracted
-	return(AllNames, AllAddresses, Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, RecordOffset, AllOther)
+	return(AllNames, AllAddresses, Subject, Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, RecordOffset, AllOther)
 
 ##Function to retreive body text of an index record
 def GetBody(WorkingBinary, RecordOffset):
@@ -289,9 +291,8 @@ while Offset < len(mm):
 	if FileSize >= 50 and (Offset + FileSize) < len(mm):
 		WorkingBinary = GetBinary(FileSize, Offset) #Assigns the first indexed record (based on offset and file size) to a variable for processing
 		Header, RecordOffset, UnknownHex = GetHeader(WorkingBinary) #Reads the first set of values from the indexed record, and increments the record offset for remaining processing
-		Names, Addresses, Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, RecordOffset, Other = GetData(WorkingBinary, RecordOffset) #Retreives data which is structured in the same format from the indexed record
+		Names, Addresses, Subject, Location, Company, Address, City, State, Country, FirstName, Surname, FullName, Title, Contact, RecordOffset, Other = GetData(WorkingBinary, RecordOffset) #Retreives data which is structured in the same format from the indexed record
 		Body, RecordOffset, BodyType = GetBody(WorkingBinary, RecordOffset) #Retreives Body of file
-		Subject = ""
 		if Header[5] == 1: #If Header[5] == 1, then the file is an email and will have a subject. Subject is stored after the body text, so the function is required to be called again
 			if Subject == "":
 				Subject, RecordOffset = GetSubject(WorkingBinary, RecordOffset) #retreives subject of email
