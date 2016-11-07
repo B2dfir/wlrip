@@ -292,6 +292,7 @@ while Offset < len(mm):
 		Body, RecordOffset, BodyType = GetBody(WorkingBinary, RecordOffset) #Retreives Body of file
 		if Header[5] == 1: #If Header[5] == 1, then the file is an email and will have a subject. Subject is stored after the body text, so the function is required to be called again
 			if Subject == "":
+				RecordOffset = RecordOffset - 1
 				Subject, Other1, RecordOffset = GetData(WorkingBinary, RecordOffset, 0) #retreives subject of email, and any other additional metadata values after the body text (none have been identified, this primarily for error handling)
 				if Other1 != "": 
 					Other += Other1#Adds any new metadata fields identified after body text to original 'other' variable. 
