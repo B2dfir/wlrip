@@ -1,5 +1,5 @@
 # WLrip (beta) #
-Version 0.1
+Version 0.2
 By Barnaby Skeggs (b2dfir.blogspot.com)
 
 ‘WaitList.dat’ (WaitList) is data file which has been found to contain stripped text from email, contact and document files as a function of the Windows Search Indexer.
@@ -30,3 +30,6 @@ The first is Unkn, which I suspect is actually padding and/or zeros from another
 The second is DocID, which I suspect is an ID for the document which was indexed by Windows Search Indexer.
 
 Please see b2dfir.blogspot.com for a description of the data structure understanding that underpins this parser.
+
+####Change Log
+v0.2 - Fixed error relating to email 'subject' output in report file
