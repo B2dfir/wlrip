@@ -1,4 +1,4 @@
-####WLrip.py v0.1
+####WLrip.py v0.2
 ###By Barnaby Skeggs
 ##Parses the Windows Search Index / TextHarvester data store file 'WaitList.dat'
 #Licensed under the GPL3 license
@@ -230,7 +230,7 @@ def Close(ItemCount):
 #####BODY OF PROGRAM#####
 
 #Parse Arguments
-parser = argparse.ArgumentParser(description="WLrip v0.1 - By Barnaby Skeggs - Extract indexed records from: %AppData%\Local\Microsoft\InputPersonalization\TextHarvester\WaitList.dat \n Github:https://github.com/B2dfir/wlrip \n Details:https://b2dfir.blogspot.com.au/2016/10/touch-screen-lexicon-forensics.html")
+parser = argparse.ArgumentParser(description="WLrip v0.2 - By Barnaby Skeggs - Extract indexed records from: %AppData%\Local\Microsoft\InputPersonalization\TextHarvester\WaitList.dat \n Github:https://github.com/B2dfir/wlrip \n Details:https://b2dfir.blogspot.com.au/2016/10/touch-screen-lexicon-forensics.html")
 parser.add_argument("-c", "--cleanup", help="Removes spaces from utf-8 strings for a cleaner text output", action="store_true")
 parser.add_argument("-x", "--xlsx", help="Write xlsx report with hyperlinks to record extracts (requires XlsxWriter python module)", action="store_true")
 parser.add_argument("-k", "--kill", help="[Admin Required] Kills 'Microsoft Windows Search Indexer' process to remove WaitList.dat file lock on a live system", action="store_true")
