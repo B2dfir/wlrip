@@ -10,7 +10,7 @@ Running WLrip with the ‘-x’ option will produce a .xlsx report with hyperlin
 Recommended execution of WLrip.py is as follows:
 >Wlrip.py -c -x -f filename -o output directory
 
-####Arguments:
+#### Arguments:
 
 | Argument       | Description           |
 | ------------- |-------------|
@@ -22,7 +22,7 @@ Recommended execution of WLrip.py is as follows:
 
 I have done my best to write this program in a way that allows it to capture new values (which I have not yet encountered) in the ‘other’ field. Values captured in the ‘other’ field will be appended with a [type], to indicate the field value stored in the data structure. Please inform me or propose changes to the git should you come across new value types for implementation in future release.
 
-#####For Community Contribution
+##### For Community Contribution
 
 Two values are included in the output report for community analysis. 
 
@@ -31,5 +31,5 @@ The second is DocID, which I suspect is an ID for the document which was indexed
 
 Please see b2dfir.blogspot.com for a description of the data structure understanding that underpins this parser.
 
-####Change Log
+#### Change Log
 v0.2 - Fixed error relating to email 'subject' output in report file
